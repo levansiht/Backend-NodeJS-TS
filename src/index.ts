@@ -1,7 +1,6 @@
 import express from 'express'
 import usersRouter from './routes/users.routes'
 import databaseservice from './services/database.services'
-import e from 'express'
 const app = express()
 const port = 3000
 
