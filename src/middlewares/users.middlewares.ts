@@ -4,6 +4,7 @@ import { validate } from '~/utils/validation'
 import userService from '~/services/users.services'
 import { USER_MESSAGES } from '~/constants/messages'
 import databaseservice from '~/services/database.services'
+import { hashPassword } from '~/utils/crypto'
 
 export const loginValidator = validate(
   checkSchema({
@@ -14,9 +15,9 @@ export const loginValidator = validate(
       trim: true,
       custom: {
         options: async (value, { req }) => {
-          const user = await databaseservice.users.findOne({ email: value })
+          const user = await databaseservice.users.findOne({ email: value, password: hashPassword(req.body.password) })
           if (user === null) {
-            throw new Error(USER_MESSAGES.EMAIL_ALREADY_EXISTS)
+            throw new Error(USER_MESSAGES.EMAIL_OR_PASSWORD_IS_INCORRECT)
           }
           req.user = user
           return true
@@ -109,9 +110,7 @@ export const registerValidator = validate(
           minSymbols: 1
         },
         errorMessage: USER_MESSAGES.PASSWORD_STRONG
-      },
-      errorMessage:
-        'Password must be at least 6 characters long, and contain at least one lowercase letter, one uppercase letter, one number, and one special character'
+      }
     },
     confirm_password: {
       notEmpty: {
