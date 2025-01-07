@@ -3,15 +3,53 @@ import { check, checkSchema } from 'express-validator'
 import { validate } from '~/utils/validation'
 import userService from '~/services/users.services'
 import { USER_MESSAGES } from '~/constants/messages'
+import databaseservice from '~/services/database.services'
 
-export const loginValidator = (req: Request, res: Response, next: NextFunction) => {
-  const { email, password } = req.body
-  if (!email || !password) {
-    res.status(400).send('Email and password are required')
-  } else {
-    next()
-  }
-}
+export const loginValidator = validate(
+  checkSchema({
+    email: {
+      isEmail: {
+        errorMessage: USER_MESSAGES.EMAIL_IS_EMAIL
+      },
+      trim: true,
+      custom: {
+        options: async (value, { req }) => {
+          const user = await databaseservice.users.findOne({ email: value })
+          if (user === null) {
+            throw new Error(USER_MESSAGES.EMAIL_ALREADY_EXISTS)
+          }
+          req.user = user
+          return true
+        }
+      }
+    },
+    password: {
+      notEmpty: {
+        errorMessage: USER_MESSAGES.PASSWORD_IS_REQUIRED
+      },
+      isString: {
+        errorMessage: USER_MESSAGES.PASSWORD_IS_STRING
+      },
+      isLength: {
+        options: {
+          min: 6,
+          max: 50
+        },
+        errorMessage: USER_MESSAGES.PASSWORD_LENGTH
+      },
+      isStrongPassword: {
+        options: {
+          minLength: 6,
+          minLowercase: 1,
+          minUppercase: 1,
+          minNumbers: 1,
+          minSymbols: 1
+        },
+        errorMessage: USER_MESSAGES.PASSWORD_STRONG
+      }
+    }
+  })
+)
 
 export const registerValidator = validate(
   checkSchema({
