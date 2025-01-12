@@ -2,9 +2,10 @@ import { NextFunction, Request, Response } from 'express'
 import User from '~/models/schemas/User.schema'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
-import { LogoutReqBody, RegisterReqBody } from '~/models/requests/User.requests'
+import { LogoutReqBody, RegisterReqBody, TokenPayload } from '~/models/requests/User.requests'
 import { ObjectId } from 'mongodb'
 import { USER_MESSAGES } from '~/constants/messages'
+import databaseservice from '~/services/database.services'
 
 export const loginController = async (req: Request, res: Response) => {
   const user = req.user as User
@@ -32,4 +33,23 @@ export const logoutController = async (req: Request<ParamsDictionary, any, Logou
   const { refresh_token } = req.body
   const result = await usersService.logout(refresh_token)
   return res.json(result)
+}
+
+export const emailVerifyValidator = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_email_verify_token as TokenPayload
+  const user = await databaseservice.users.findOne({ _id: new ObjectId(user_id) })
+  if (!user) {
+    throw new Error(USER_MESSAGES.USER_NOT_FOUND)
+  }
+
+  if (user.email_verify_token === '') {
+    return res.json({
+      message: USER_MESSAGES.EMAIL_ALREADY_VERIFIED
+    })
+  }
+  const result = await usersService.verifyEmail(user_id)
+  return res.json({
+    message: USER_MESSAGES.EMAIL_VERIFY_SUCCESS,
+    data: result
+  })
 }
