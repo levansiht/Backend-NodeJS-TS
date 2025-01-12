@@ -94,10 +94,9 @@ class UsersService {
   async verifyEmail(user_id: string) {
     const [token] = await Promise.all([
       this.signRefreshAndAccessToken(user_id),
-      databaseservice.users.updateOne(
-        { _id: new ObjectId(user_id) },
-        { $set: { email_verify_token: '', verify: UserVerifyStatus.Verified, updated_at: new Date() } }
-      )
+      databaseservice.users.updateOne({ _id: new ObjectId(user_id) }, [
+        { $set: { email_verify_token: '', verify: UserVerifyStatus.Verified, updated_at: '$$NOW' } }
+      ])
     ])
     const [access_token, refresh_token] = token
 
