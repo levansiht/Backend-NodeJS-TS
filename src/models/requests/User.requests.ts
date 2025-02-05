@@ -29,3 +29,9 @@ export interface EmailVerifyTokenBody {
 export interface ForgotPasswordReqBody {
   forgot_password_token: string
 }
+
+export interface resetPasswordReqBody {
+  forgot_password_token: string
+  password: string
+  confirm_password: string
+}
